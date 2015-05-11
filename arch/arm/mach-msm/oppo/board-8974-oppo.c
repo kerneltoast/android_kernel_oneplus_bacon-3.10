@@ -41,9 +41,56 @@
 #include "clock.h"
 #include "platsmp.h"
 
+#ifdef CONFIG_PSTORE_RAM
+#include <linux/pstore_ram.h>
+#include <linux/memblock.h>
+
+#define OPPO_PERSISTENT_RAM_SIZE SZ_1M
+#define OPPO_RAM_CONSOLE_SIZE (256 * SZ_1K)
+#define OPPO_RAM_CONSOLE_BASE (SZ_1G + SZ_256M)
+
+static struct ramoops_platform_data oppo_ramoops_data = {
+	.console_size = OPPO_RAM_CONSOLE_SIZE,
+	.mem_address  = OPPO_RAM_CONSOLE_BASE,
+	.mem_size     = OPPO_PERSISTENT_RAM_SIZE,
+};
+
+static struct platform_device oppo_ramoops_dev = {
+	.name = "ramoops",
+	.dev = {
+		.platform_data = &oppo_ramoops_data,
+	}
+};
+
+static void __init oppo_reserve_persistent_ram(void)
+{
+	int ret = memblock_reserve(OPPO_RAM_CONSOLE_BASE, OPPO_PERSISTENT_RAM_SIZE);
+
+	if (ret)
+		pr_err("%s: failed to initialize persistent ram\n", __func__);
+}
+
+static void __init oppo_add_persistent_device(void)
+{
+	int ret;
+
+	if (!oppo_ramoops_data.mem_address) {
+		pr_err("%s: No allocated memory for ramoops\n", __func__);
+		return;
+	}
+
+	ret = platform_device_register(&oppo_ramoops_dev);
+	if (ret)
+		pr_err("%s: Unable to register platform device\n", __func__);
+}
+#endif
+
 void __init msm_8974_reserve(void)
 {
 	of_scan_flat_dt(dt_scan_for_memory_reserve, NULL);
+#ifdef CONFIG_PSTORE_RAM
+	oppo_reserve_persistent_ram();
+#endif
 }
 
 /*
@@ -60,6 +107,9 @@ void __init msm8974_add_drivers(void)
 	rpm_smd_regulator_driver_init();
 	msm_spm_device_init();
 	krait_power_init();
+#ifdef CONFIG_PSTORE_RAM
+	oppo_add_persistent_device();
+#endif
 }
 
 static struct of_dev_auxdata msm_hsic_host_adata[] = {
