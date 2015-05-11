@@ -1,5 +1,7 @@
 ifeq ($(CONFIG_OF),y)
 
+# 14001 msm8974
+dtb-$(CONFIG_OPPO_MSM_14001) += msm8974-14001.dtb
 # Keep at91 dtb files sorted alphabetically for each SoC
 # rm9200
 dtb-$(CONFIG_ARCH_AT91) += at91rm9200ek.dtb
