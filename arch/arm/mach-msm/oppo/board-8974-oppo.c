@@ -10,6 +10,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/gpio.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
@@ -158,6 +159,7 @@ static void __init msm8974_map_io(void)
 void __init msm8974_init(void)
 {
 	struct of_dev_auxdata *adata = msm8974_auxdata_lookup;
+	int rc;
 
 	/*
 	 * populate devices from DT first so smem probe will get called as part
@@ -175,6 +177,32 @@ void __init msm8974_init(void)
 	msm_8974_init_gpiomux();
 	regulator_has_full_constraints();
 	msm8974_add_drivers();
+
+	/* configure ESD gpio */
+	rc = gpio_request(28, "disp_esd");
+	if (rc) {
+		pr_err("yanghai request ESD gpio failed, rc=%d\n", rc);
+		gpio_free(28);
+		return;
+	}
+
+	rc = gpio_tlmm_config(GPIO_CFG(
+			28, 0,
+			GPIO_CFG_INPUT,
+			GPIO_CFG_PULL_DOWN,
+			GPIO_CFG_2MA),
+			GPIO_CFG_ENABLE);
+	if (rc) {
+		pr_err("%s: unable to ESD config tlmm = 28, rc=%d\n", __func__, rc);
+		gpio_free(28);
+		return;
+	}
+
+	rc = gpio_direction_input(28);
+	if (rc) {
+		pr_err("%s: set_direction for ESD GPIO failed, rc=%d\n", __func__, rc);
+		gpio_free(28);
+	}
 }
 
 static const char *msm8974_dt_match[] __initconst = {
