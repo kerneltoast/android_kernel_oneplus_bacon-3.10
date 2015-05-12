@@ -1090,13 +1090,13 @@ static void vk_calculate_area(void)  //added by liujun
 	printk("[syna]maxx=%d,maxy=%d,vkh=%d\n",syna_ts_data->sensor_max_x,syna_ts_data->sensor_max_y,syna_ts_data->virtual_key_height);
 
 	syna_ts_data->vk_prop_width = LCD_MULTI_RATIO(190);
-	/*if (get_pcb_version() <= HW_VERSION__20) {
+	//if (get_pcb_version() <= HW_VERSION__20) {
 		syna_ts_data->vk_prop_center_y = LCD_MULTI_RATIO(1974);
 		syna_ts_data->vk_prop_height = LCD_MULTI_RATIO(120);
-	} else*/ {
+	/*} else {
 		syna_ts_data->vk_prop_center_y = 2626;
 		syna_ts_data->vk_prop_height = 152;
-	}
+	}*/
 
 	for (i = 0; i < TP_VKEY_COUNT; ++i) {
 		vkey_buttons[i].width = vk_width - margin_x*2;
@@ -1171,7 +1171,7 @@ static int get_virtual_key_button(int x, int y)
 	int lcdheight = LCD_MAX_Y;
 
 	//if (get_pcb_version() > HW_VERSION__20)
-		lcdheight = LCD_MAX_Y_FIND7S;
+	//	lcdheight = LCD_MAX_Y_FIND7S;
 
 	if (y <= lcdheight)
 		return 0;
@@ -1839,21 +1839,21 @@ static ssize_t synaptics_rmi4_baseline_data(char *buf, bool savefile)
 		raw_cap_data = (const int16_t *)raw_cap_data_wintek_9093;
 		iCbcDataSize = sizeof(raw_cap_data_wintek_9093);
 	} else if (syna_ts_data->vendor_id == TP_VENDOR_TPK) {
-		//if (get_pcb_version() >= HW_VERSION__20) {
+		/*if (get_pcb_version() >= HW_VERSION__20) {
 			tx_num = TX_NUM_TPK_FIND7S;
 			rx_num = RX_NUM_TPK_FIND7S;
 			rx2rx_lower_limit = DiagonalLowerLimit_TPK;
 			rx2rx_upper_limit = DiagonalUpperLimit_TPK;
 			raw_cap_data = (const int16_t *)raw_cap_data_tpk_find7s;
 			iCbcDataSize = sizeof(raw_cap_data_tpk_find7s);
-		/*} else {
+		} else*/ {
 			tx_num = TX_NUM_TPK;
 			rx_num = RX_NUM_TPK;
 			rx2rx_lower_limit = DiagonalLowerLimit_TPK;
 			rx2rx_upper_limit = DiagonalUpperLimit_TPK;
 			raw_cap_data = (const int16_t *)raw_cap_data_tpk;
 			iCbcDataSize = sizeof(raw_cap_data_tpk);
-		}*/
+		}
 	} else if (syna_ts_data->vendor_id == TP_VENDOR_YOUNGFAST) {
 		tx_num = TX_NUM_YOUNGFAST;
 		rx_num = RX_NUM_YOUNGFAST;
@@ -4418,21 +4418,21 @@ static int synaptics_rmi4_probe(struct i2c_client *client,
 	rmi4_data->reset_device = synaptics_rmi4_reset_device;
 
 	//init sensor size
-	/*if (get_pcb_version() <= HW_VERSION__20) {
+	//if (get_pcb_version() <= HW_VERSION__20) {
 		rmi4_data->virtual_key_height = 114;
 		rmi4_data->sensor_max_x = LCD_MAX_X;
 		rmi4_data->sensor_max_y = LCD_MAX_Y+120;
 		syna_lcd_ratio1 = 100;
 		syna_lcd_ratio2 = 100;
-		if (get_pcb_version() == HW_VERSION__20)
-			syna_lcd_ratio1 = 135;
-	} else*/ {
+		//if (get_pcb_version() == HW_VERSION__20)
+		//	syna_lcd_ratio1 = 135;
+	/*} else {
 		rmi4_data->virtual_key_height = 142;
 		rmi4_data->sensor_max_x = LCD_MAX_X_FIND7S;
 		rmi4_data->sensor_max_y = LCD_MAX_Y_FIND7S+152;
 		syna_lcd_ratio1 = 133;
 		syna_lcd_ratio2 = 100;
-	}
+	}*/
 
 	mutex_init(&(rmi4_data->rmi4_io_ctrl_mutex));
 	mutex_init(&(rmi4_data->rmi4_reset_mutex));
