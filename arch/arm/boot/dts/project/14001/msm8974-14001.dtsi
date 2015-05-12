@@ -11,6 +11,7 @@
  */
 
 #include "dsi-panel-jdi-1080p-cmd.dtsi"
+#include "msm8974-oppo-input.dtsi"
 
 / {
 	memory {
