@@ -214,6 +214,15 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(manufacturer),
 	POWER_SUPPLY_ATTR(serial_number),
 	POWER_SUPPLY_ATTR(battery_type),
+	POWER_SUPPLY_ATTR(authenticate),//wangjc add for authentication
+#ifdef CONFIG_VENDOR_EDIT
+/* jingchun.wang@Onlinerd.Driver, 2013/12/16  Add for charge timeout */
+	POWER_SUPPLY_ATTR(charge_timeout),
+#endif /*CONFIG_VENDOR_EDIT*/
+#ifdef CONFIG_PIC1503_FASTCG
+/* jingchun.wang@Onlinerd.Driver,2013/12/22 Add for fastchg*/
+	POWER_SUPPLY_ATTR(fastcharger),
+#endif	//CONFIG_PIC1503_FASTCG
 };
 
 static struct attribute *

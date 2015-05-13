@@ -12,6 +12,7 @@
 
 #include "dsi-panel-jdi-1080p-cmd.dtsi"
 #include "msm8974-oppo-input.dtsi"
+#include "msm8974-oppo-pm.dtsi"
 
 / {
 	memory {
@@ -23,6 +24,11 @@
 			label = "oem_data";
 		};
 	};
+};
+
+&pm8941_boost {
+	regulator-min-microvolt = <4500000>;
+	regulator-max-microvolt = <4500000>;
 };
 
 &soc {

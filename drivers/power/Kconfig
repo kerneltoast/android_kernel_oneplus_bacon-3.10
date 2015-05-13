@@ -401,6 +401,20 @@ config BQ27520_TEST_ENABLE
 	help
 	  Say Y here to enable Test sysfs Interface for BQ27520 Drivers.
 
+config BATTERY_BQ27541
+	tristate "BQ27541 battery driver"
+	depends on I2C
+	default n
+	help
+	  Say Y here to enable support for batteries with BQ27541 (I2C) chips.
+
+
+config HMAC_SHA1_BQ27541
+	tristate "HMAC_SHA1_BQ27541 driver"
+	default n
+	help
+	  Say Y here to enable support for batteries with HMAC_SHA1_BQ27541 chips.
+
 config BATTERY_BQ28400
 	tristate "BQ28400 battery driver"
 	depends on I2C
@@ -423,6 +437,16 @@ config QPNP_CHARGER
 	  and boost device which supports USB detection and charging. The driver
 	  also offers relevant information to userspace via the power supply
 	  framework.
+
+config BQ24196_CHARGER
+	tristate "BQ24196 Charger driver"
+	help
+	  Say Y here to enable the ba24196 charger
+
+config PIC1503_FASTCG
+	tristate "CONFIG_PIC1503_FASTCG driver"
+	help
+	  Say Y here to enable the PIC1503 fast charger
 
 config PM8921_BMS
 	tristate "PM8921 Battery Monitoring System driver"

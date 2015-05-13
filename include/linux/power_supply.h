@@ -45,6 +45,11 @@ enum {
 	POWER_SUPPLY_CHARGE_TYPE_NONE,
 	POWER_SUPPLY_CHARGE_TYPE_TRICKLE,
 	POWER_SUPPLY_CHARGE_TYPE_FAST,
+#ifdef CONFIG_VENDOR_EDIT
+	/*OPPO 2013-10-22 liaofuchun add for bq24196 charger*/
+	POWER_SUPPLY_CHARGE_TYPE_TERMINATE,
+	/*OPPO 2013-10-28 liaofuchun add end*/
+#endif
 };
 
 enum {
@@ -165,6 +170,11 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_SERIAL_NUMBER,
 	POWER_SUPPLY_PROP_BATTERY_TYPE,
+	POWER_SUPPLY_PROP_AUTHENTICATE,//wangjc add for authentication
+	/* jingchun.wang@Onlinerd.Driver, 2013/12/16  Add for charge timeout */
+	POWER_SUPPLY_PROP_CHARGE_TIMEOUT,
+	/* fuchun.liao@exp.Driver, 2013/12/22  Add for fastchg */
+	POWER_SUPPLY_PROP_FASTCHARGER,
 };
 
 enum power_supply_type {
