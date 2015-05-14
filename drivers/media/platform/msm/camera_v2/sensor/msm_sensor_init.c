@@ -50,7 +50,7 @@ static int msm_sensor_wait_for_probe_done(struct msm_sensor_init_t *s_init)
 	int rc;
 	int tm = 10000;
 	if (s_init->module_init_status == 1) {
-		pr_err("msm_cam_get_module_init_status -2\n");
+		CDBG("msm_cam_get_module_init_status -2\n");
 		return 0;
 	}
 	rc = wait_event_interruptible_timeout(s_init->state_wait,
@@ -64,8 +64,7 @@ static int msm_sensor_wait_for_probe_done(struct msm_sensor_init_t *s_init)
 }
 
 /* Static function definition */
-static int32_t msm_sensor_driver_cmd(struct msm_sensor_init_t *s_init,
-	void *arg)
+static long msm_sensor_driver_cmd(struct msm_sensor_init_t *s_init, void *arg)
 {
 	int32_t                      rc = 0;
 	struct sensor_init_cfg_data *cfg = (struct sensor_init_cfg_data *)arg;
@@ -122,7 +121,7 @@ static long msm_sensor_init_subdev_ioctl(struct v4l2_subdev *sd,
 		break;
 
 	default:
-		pr_err_ratelimited("default\n");
+		pr_err("default");
 		break;
 	}
 
@@ -138,7 +137,7 @@ static int __init msm_sensor_init_module(void)
 		return -ENOMEM;
 	}
 
-	pr_err("MSM_SENSOR_INIT_MODULE %p", NULL);
+	CDBG("MSM_SENSOR_INIT_MODULE %p", NULL);
 
 	/* Initialize mutex */
 	mutex_init(&s_init->imutex);

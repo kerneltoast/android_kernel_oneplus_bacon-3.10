@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1145,12 +1145,7 @@ static int32_t mt9m114_platform_probe(struct platform_device *pdev)
 	int32_t rc;
 	const struct of_device_id *match;
 	match = of_match_device(mt9m114_dt_match, &pdev->dev);
-	if (match)
-		rc = msm_sensor_platform_probe(pdev, match->data);
-	else {
-		pr_err("%s:%d match is null\n", __func__, __LINE__);
-		rc = -EINVAL;
-	}
+	rc = msm_sensor_platform_probe(pdev, match->data);
 	return rc;
 }
 
@@ -1181,7 +1176,7 @@ int32_t mt9m114_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 	void __user *argp)
 {
 	struct sensorb_cfg_data *cdata = (struct sensorb_cfg_data *)argp;
-	int32_t rc = 0;
+	long rc = 0;
 	int32_t i = 0;
 	mutex_lock(s_ctrl->msm_sensor_mutex);
 	CDBG("%s:%d %s cfgtype = %d\n", __func__, __LINE__,
@@ -1196,6 +1191,10 @@ int32_t mt9m114_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		for (i = 0; i < SUB_MODULE_MAX; i++)
 			cdata->cfg.sensor_info.subdev_id[i] =
 				s_ctrl->sensordata->sensor_info->subdev_id[i];
+		cdata->cfg.sensor_info.is_mount_angle_valid =
+			s_ctrl->sensordata->sensor_info->is_mount_angle_valid;
+		cdata->cfg.sensor_info.sensor_mount_angle =
+			s_ctrl->sensordata->sensor_info->sensor_mount_angle;
 		CDBG("%s:%d sensor name %s\n", __func__, __LINE__,
 			cdata->cfg.sensor_info.sensor_name);
 		CDBG("%s:%d session id %d\n", __func__, __LINE__,
@@ -1300,7 +1299,7 @@ int32_t mt9m114_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 			rc = -EFAULT;
 			break;
 		}
-		CDBG("%s sensor id 0x%x\n", __func__,
+		CDBG("%s sensor id %x\n", __func__,
 			sensor_slave_info.slave_addr);
 		CDBG("%s sensor addr type %d\n", __func__,
 			sensor_slave_info.addr_type);
@@ -1326,6 +1325,13 @@ int32_t mt9m114_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		if (copy_from_user(&conf_array,
 			(void *)cdata->cfg.setting,
 			sizeof(struct msm_camera_i2c_reg_setting))) {
+			pr_err("%s:%d failed\n", __func__, __LINE__);
+			rc = -EFAULT;
+			break;
+		}
+
+		if ((!conf_array.size) ||
+			(conf_array.size > I2C_SEQ_REG_DATA_MAX)) {
 			pr_err("%s:%d failed\n", __func__, __LINE__);
 			rc = -EFAULT;
 			break;
@@ -1365,6 +1371,12 @@ int32_t mt9m114_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 			break;
 		}
 
+		if ((!conf_array.size) ||
+			(conf_array.size > I2C_SEQ_REG_DATA_MAX)) {
+			pr_err("%s:%d failed\n", __func__, __LINE__);
+			rc = -EFAULT;
+			break;
+		}
 		reg_setting = kzalloc(conf_array.size *
 			(sizeof(struct msm_camera_i2c_seq_reg_array)),
 			GFP_KERNEL);

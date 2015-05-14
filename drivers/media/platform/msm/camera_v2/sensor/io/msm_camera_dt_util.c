@@ -324,7 +324,7 @@ int msm_sensor_get_dt_csi_data(struct device_node *of_node,
 	*csi_lane_params = clp;
 
 	rc = of_property_read_u32(of_node, "qcom,csi-lane-assign", &val);
-	CDBG("%s qcom,csi-lane-assign 0x%x, rc %d\n", __func__, val, rc);
+	CDBG("%s qcom,csi-lane-assign %x, rc %d\n", __func__, val, rc);
 	if (rc < 0) {
 		pr_err("%s failed %d\n", __func__, __LINE__);
 		goto ERROR;
@@ -332,7 +332,7 @@ int msm_sensor_get_dt_csi_data(struct device_node *of_node,
 	clp->csi_lane_assign = val;
 
 	rc = of_property_read_u32(of_node, "qcom,csi-lane-mask", &val);
-	CDBG("%s qcom,csi-lane-mask 0x%x, rc %d\n", __func__, val, rc);
+	CDBG("%s qcom,csi-lane-mask %x, rc %d\n", __func__, val, rc);
 	if (rc < 0) {
 		pr_err("%s failed %d\n", __func__, __LINE__);
 		goto ERROR;
@@ -871,6 +871,18 @@ int msm_camera_get_dt_vreg_data(struct device_node *of_node,
 		goto ERROR1;
 	}
 
+	rc = of_property_read_u32_array(of_node, "qcom,cam-vreg-type",
+		vreg_array, count);
+	if (rc < 0) {
+		pr_err("%s failed %d\n", __func__, __LINE__);
+		goto ERROR2;
+	}
+	for (i = 0; i < count; i++) {
+		vreg[i].type = vreg_array[i];
+		CDBG("%s cam_vreg[%d].type = %d\n", __func__, i,
+			vreg[i].type);
+	}
+
 	rc = of_property_read_u32_array(of_node, "qcom,cam-vreg-min-voltage",
 		vreg_array, count);
 	if (rc < 0) {
@@ -1070,8 +1082,6 @@ power_up_failed:
 				0);
 			break;
 		case SENSOR_GPIO:
-			if (!ctrl->gpio_conf->gpio_num_info)
-				continue;
 			if (!ctrl->gpio_conf->gpio_num_info->valid
 				[power_setting->seq_val])
 				continue;

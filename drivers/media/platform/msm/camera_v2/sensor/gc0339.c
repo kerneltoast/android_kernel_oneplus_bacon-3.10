@@ -394,7 +394,7 @@ int32_t gc0339_config(struct msm_sensor_ctrl_t *s_ctrl,
 	void __user *argp)
 {
 	struct sensorb_cfg_data *cdata = (struct sensorb_cfg_data *)argp;
-	int32_t rc = 0;
+	long rc = 0;
 	int32_t i = 0;
 	mutex_lock(s_ctrl->msm_sensor_mutex);
 	switch (cdata->cfgtype) {
@@ -478,13 +478,13 @@ int32_t gc0339_config(struct msm_sensor_ctrl_t *s_ctrl,
 			rc = -EFAULT;
 			break;
 		}
-		CDBG("%s sensor id 0x%x\n", __func__,
+		CDBG("%s sensor id %x\n", __func__,
 			sensor_slave_info.slave_addr);
 		CDBG("%s sensor addr type %d\n", __func__,
 			sensor_slave_info.addr_type);
-		CDBG("%s sensor reg 0x%x\n", __func__,
+		CDBG("%s sensor reg %x\n", __func__,
 			sensor_slave_info.sensor_id_info.sensor_id_reg_addr);
-		CDBG("%s sensor id 0x%x\n", __func__,
+		CDBG("%s sensor id %x\n", __func__,
 			sensor_slave_info.sensor_id_info.sensor_id);
 		for (slave_index = 0; slave_index <
 			power_setting_array->size; slave_index++) {
@@ -514,9 +514,15 @@ int32_t gc0339_config(struct msm_sensor_ctrl_t *s_ctrl,
 		}
 
 		if (conf_array.addr_type == MSM_CAMERA_I2C_WORD_ADDR
-			|| conf_array.data_type == MSM_CAMERA_I2C_WORD_DATA
-			|| !conf_array.size)
+			|| conf_array.data_type == MSM_CAMERA_I2C_WORD_DATA)
 			break;
+
+		if ((!conf_array.size) ||
+			(conf_array.size > I2C_SEQ_REG_DATA_MAX)) {
+			pr_err("%s:%d failed\n", __func__, __LINE__);
+			rc = -EFAULT;
+			break;
+		}
 
 		reg_setting = kzalloc(conf_array.size *
 			(sizeof(struct msm_camera_i2c_reg_array)), GFP_KERNEL);
@@ -547,6 +553,13 @@ int32_t gc0339_config(struct msm_sensor_ctrl_t *s_ctrl,
 		if (copy_from_user(&conf_array,
 			(void *)cdata->cfg.setting,
 			sizeof(struct msm_camera_i2c_seq_reg_setting))) {
+			pr_err("%s:%d failed\n", __func__, __LINE__);
+			rc = -EFAULT;
+			break;
+		}
+
+		if ((!conf_array.size) ||
+			(conf_array.size > I2C_SEQ_REG_DATA_MAX)) {
 			pr_err("%s:%d failed\n", __func__, __LINE__);
 			rc = -EFAULT;
 			break;
@@ -673,12 +686,7 @@ static int32_t gc0339_platform_probe(struct platform_device *pdev)
 	const struct of_device_id *match;
 
 	match = of_match_device(gc0339_dt_match, &pdev->dev);
-	if (match)
-		rc = msm_sensor_platform_probe(pdev, match->data);
-	else {
-		pr_err("%s:%d match is null\n", __func__, __LINE__);
-		rc = -EINVAL;
-	}
+	rc = msm_sensor_platform_probe(pdev, match->data);
 	return rc;
 }
 

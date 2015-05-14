@@ -14,7 +14,7 @@
 
 #include <linux/i2c.h>
 #include <linux/gpio.h>
-#include <soc/qcom/camera2.h>
+#include <mach/camera2.h>
 #include <media/v4l2-subdev.h>
 #include <media/msmb_camera.h>
 #include "msm_camera_i2c.h"
@@ -30,8 +30,8 @@
 struct msm_actuator_ctrl_t;
 
 enum msm_actuator_state_t {
-	ACTUATOR_POWER_UP,
 	ACTUATOR_POWER_DOWN,
+	ACTUATOR_POWER_UP,
 };
 
 struct msm_actuator_func_tbl {
@@ -55,7 +55,6 @@ struct msm_actuator_func_tbl {
 			int16_t);
 	int32_t (*actuator_set_position)(struct msm_actuator_ctrl_t *,
 		struct msm_actuator_set_position_t *);
-	int32_t (*actuator_park_lens)(struct msm_actuator_ctrl_t *);
 };
 
 struct msm_actuator {
@@ -91,6 +90,8 @@ struct msm_actuator_ctrl_t {
 	struct msm_actuator_reg_params_t reg_tbl[MAX_ACTUATOR_REG_TBL_SIZE];
 	uint16_t region_size;
 	void *user_data;
+	uint32_t vcm_pwd;
+	uint32_t vcm_enable;
 	uint32_t total_steps;
 	uint16_t pwd_step;
 	uint16_t initial_code;
@@ -98,10 +99,13 @@ struct msm_actuator_ctrl_t {
 	uint16_t i2c_tbl_index;
 	enum cci_i2c_master_t cci_master;
 	uint32_t subdev_id;
-	enum msm_actuator_state_t actuator_state;
 	struct msm_actuator_vreg vreg_cfg;
-	struct park_lens_data_t park_lens;
-	uint32_t max_code_size;
+	/*muyuezhong,2015/02/07,Add for close camera click*/
+	#ifdef VENDOR_EDIT
+    	uint16_t current_lens_pos;
+    	uint32_t hw_params;
+	#endif
+	enum msm_actuator_state_t actuator_state;
 };
 
 #endif

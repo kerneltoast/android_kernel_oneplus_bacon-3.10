@@ -149,7 +149,7 @@ static struct msm_camera_i2c_reg_conf sp1628_recommend_settings[] = {
 	{0x75, 0x18,},
 	{0x77, 0x16,},	/* 18*/
 	{0x7f, 0x19,},
-	{0x31, 0x11,},	/* 720P, no mirror/flip */
+	{0x31, 0x71,},	/*70 mirror/flip 720P*/
 	{0xfd, 0x01,},
 	{0x5d, 0x11,},	/* position*/
 	{0x5f, 0x00,},
@@ -591,12 +591,7 @@ static int32_t sp1628_platform_probe(struct platform_device *pdev)
 	const struct of_device_id *match;
 	CDBG("%s, E.", __func__);
 	match = of_match_device(sp1628_dt_match, &pdev->dev);
-	if (match)
-		rc = msm_sensor_platform_probe(pdev, match->data);
-	else {
-		pr_err("%s:%d match is null\n", __func__, __LINE__);
-		rc = -EINVAL;
-	}
+	rc = msm_sensor_platform_probe(pdev, match->data);
 	return rc;
 }
 
@@ -627,7 +622,7 @@ int32_t sp1628_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 	void __user *argp)
 {
 	struct sensorb_cfg_data *cdata = (struct sensorb_cfg_data *)argp;
-	int32_t rc = 0;
+	long rc = 0;
 	int32_t i = 0;
 	mutex_lock(s_ctrl->msm_sensor_mutex);
 	CDBG("%s:%d %s cfgtype = %d\n", __func__, __LINE__,
@@ -642,6 +637,10 @@ int32_t sp1628_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		for (i = 0; i < SUB_MODULE_MAX; i++)
 			cdata->cfg.sensor_info.subdev_id[i] =
 				s_ctrl->sensordata->sensor_info->subdev_id[i];
+		cdata->cfg.sensor_info.is_mount_angle_valid =
+			s_ctrl->sensordata->sensor_info->is_mount_angle_valid;
+		cdata->cfg.sensor_info.sensor_mount_angle =
+			s_ctrl->sensordata->sensor_info->sensor_mount_angle;
 		CDBG("%s:%d sensor name %s\n", __func__, __LINE__,
 			cdata->cfg.sensor_info.sensor_name);
 		CDBG("%s:%d session id %d\n", __func__, __LINE__,
@@ -772,6 +771,13 @@ int32_t sp1628_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 			break;
 		}
 
+		if ((!conf_array.size) ||
+			(conf_array.size > I2C_SEQ_REG_DATA_MAX)) {
+			pr_err("%s:%d failed\n", __func__, __LINE__);
+			rc = -EFAULT;
+			break;
+		}
+
 		reg_setting = kzalloc(conf_array.size *
 			(sizeof(struct msm_camera_i2c_reg_array)), GFP_KERNEL);
 		if (!reg_setting) {
@@ -806,6 +812,12 @@ int32_t sp1628_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 			break;
 		}
 
+		if ((!conf_array.size) ||
+			(conf_array.size > I2C_SEQ_REG_DATA_MAX)) {
+			pr_err("%s:%d failed\n", __func__, __LINE__);
+			rc = -EFAULT;
+			break;
+		}
 		reg_setting = kzalloc(conf_array.size *
 			(sizeof(struct msm_camera_i2c_seq_reg_array)),
 			GFP_KERNEL);
@@ -943,7 +955,7 @@ int32_t sp1628_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		return rc;
 	}
 
-	CDBG("%s: read id: 0x%x expected id 0x16:\n", __func__, chipid);
+	CDBG("%s: read id: %x expected id 0x16:\n", __func__, chipid);
 	if (chipid != 0x16) {
 		pr_err("msm_sensor_match_id chip id doesnot match\n");
 		return -ENODEV;
@@ -960,7 +972,7 @@ int32_t sp1628_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		return rc;
 	}
 
-	CDBG("%s: read id: 0x%x expected id 0x28:\n", __func__, chipid);
+	CDBG("%s: read id: %x expected id 0x28:\n", __func__, chipid);
 	if (chipid != 0x28) {
 		pr_err("msm_sensor_match_id chip id doesnot match\n");
 		return -ENODEV;

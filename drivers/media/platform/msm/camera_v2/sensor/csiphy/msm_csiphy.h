@@ -42,10 +42,8 @@ struct csiphy_device {
 	struct mutex mutex;
 	uint32_t hw_version;
 	enum msm_csiphy_state_t csiphy_state;
-
 	struct clk *csiphy_clk[CSIPHY_NUM_CLK_MAX];
-
-	int32_t ref_count;
+	uint8_t ref_count;
 	uint16_t lane_mask[MAX_CSIPHY];
 };
 

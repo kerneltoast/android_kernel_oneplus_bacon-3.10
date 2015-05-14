@@ -27,7 +27,7 @@
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
 #endif
 
-#define SENSOR_MAX_MOUNTANGLE (360)
+#define	SENSOR_MAX_MOUNTANGLE (360)
 
 /* Static declaration */
 static struct msm_sensor_ctrl_t *g_sctrl[MAX_CAMERAS];
@@ -297,17 +297,17 @@ static int32_t msm_sensor_validate_slave_info(
 {
 	if (INVALID_CAMERA_B == sensor_info->position) {
 		sensor_info->position = BACK_CAMERA_B;
-		CDBG("%s:%d Set default sensor position\n",
+		pr_err("%s Set dafault sensor position%d\n",
 			__func__, __LINE__);
 	}
 	if (CAMERA_MODE_INVALID == sensor_info->modes_supported) {
 		sensor_info->modes_supported = CAMERA_MODE_2D_B;
-		CDBG("%s:%d Set default sensor modes_supported\n",
+		pr_err("%s Set dafault sensor modes_supported%d\n",
 			__func__, __LINE__);
 	}
-	if (SENSOR_MAX_MOUNTANGLE <= sensor_info->sensor_mount_angle) {
+	if (SENSOR_MAX_MOUNTANGLE < sensor_info->sensor_mount_angle) {
 		sensor_info->sensor_mount_angle = 0;
-		CDBG("%s:%d Set default sensor mount angle\n",
+		pr_err("%s Set dafault sensor mount angle%d\n",
 			__func__, __LINE__);
 		sensor_info->is_mount_angle_valid = 1;
 	}
@@ -351,11 +351,11 @@ int32_t msm_sensor_driver_probe(void *setting)
 
 	/* Print slave info */
 	CDBG("camera id %d", slave_info->camera_id);
-	CDBG("slave_addr 0x%x", slave_info->slave_addr);
+	CDBG("slave_addr %x", slave_info->slave_addr);
 	CDBG("addr_type %d", slave_info->addr_type);
-	CDBG("sensor_id_reg_addr 0x%x",
+	CDBG("sensor_id_reg_addr %x",
 		slave_info->sensor_id_info.sensor_id_reg_addr);
-	CDBG("sensor_id 0x%x", slave_info->sensor_id_info.sensor_id);
+	CDBG("sensor_id %x", slave_info->sensor_id_info.sensor_id);
 	CDBG("size %d", slave_info->power_setting_array.size);
 	CDBG("size down %d", slave_info->power_setting_array.size_down);
 
@@ -371,7 +371,7 @@ int32_t msm_sensor_driver_probe(void *setting)
 		pr_err("failed: invalid camera id %d max %d",
 			slave_info->camera_id, MAX_CAMERAS);
 		rc = -EINVAL;
-		goto FREE_SLAVE_INFO;
+		goto FREE_POWER_SETTING;
 	}
 
 	/* Extract s_ctrl from camera id */
@@ -380,7 +380,7 @@ int32_t msm_sensor_driver_probe(void *setting)
 		pr_err("failed: s_ctrl %p for camera_id %d", s_ctrl,
 			slave_info->camera_id);
 		rc = -EINVAL;
-		goto FREE_SLAVE_INFO;
+		goto FREE_POWER_SETTING;
 	}
 
 	CDBG("s_ctrl[%d] %p", slave_info->camera_id, s_ctrl);
@@ -392,12 +392,11 @@ int32_t msm_sensor_driver_probe(void *setting)
 		 * probe
 		 */
 		pr_err("slot %d has some other sensor", slave_info->camera_id);
-		rc = 0;
-		goto FREE_SLAVE_INFO;
+		kfree(slave_info);
+		return 0;
 	}
 
 	size = slave_info->power_setting_array.size;
-
 	/* Validate size */
 	if (size > MAX_POWER_CONFIG) {
 		pr_err("failed: invalid number of power_up_setting %d\n", size);
@@ -531,7 +530,6 @@ int32_t msm_sensor_driver_probe(void *setting)
 	cci_client->sid = slave_info->slave_addr >> 1;
 	cci_client->retries = 3;
 	cci_client->id_map = 0;
-	cci_client->i2c_freq_mode = slave_info->i2c_freq_mode;
 
 	/* Parse and fill vreg params for powerup settings */
 	rc = msm_camera_fill_vreg_params(
@@ -557,8 +555,10 @@ int32_t msm_sensor_driver_probe(void *setting)
 		goto FREE_CAMERA_INFO;
 	}
 
-	/* Update sensor, actuator and eeprom name in
-	*  sensor control structure */
+	/*
+	 *  Update sensor, actuator and eeprom name in
+	 *  sensor control structure.
+	 */
 	s_ctrl->sensordata->sensor_name = slave_info->sensor_name;
 	s_ctrl->sensordata->eeprom_name = slave_info->eeprom_name;
 	s_ctrl->sensordata->actuator_name = slave_info->actuator_name;
@@ -569,7 +569,7 @@ int32_t msm_sensor_driver_probe(void *setting)
 	rc = msm_sensor_fill_eeprom_subdevid_by_name(s_ctrl);
 	if (rc < 0) {
 		pr_err("%s failed %d\n", __func__, __LINE__);
-		goto FREE_CAMERA_INFO;
+		goto FREE_POWER_SETTING;
 	}
 	/*
 	 * Update actuator subdevice Id by input actuator name
@@ -577,7 +577,7 @@ int32_t msm_sensor_driver_probe(void *setting)
 	rc = msm_sensor_fill_actuator_subdevid_by_name(s_ctrl);
 	if (rc < 0) {
 		pr_err("%s failed %d\n", __func__, __LINE__);
-		goto FREE_CAMERA_INFO;
+		goto FREE_POWER_SETTING;
 	}
 
 	/* Power up and probe sensor */
@@ -594,14 +594,6 @@ int32_t msm_sensor_driver_probe(void *setting)
 	 * probed on this slot
 	 */
 	s_ctrl->is_probe_succeed = 1;
-
-	/*
-	 * Update the subdevice id of flash-src based on availability in kernel.
-	 */
-	if (slave_info->is_flash_supported == 0) {
-		s_ctrl->sensordata->sensor_info->
-			subdev_id[SUB_MODULE_LED_FLASH] = -1;
-	}
 
 	/*
 	 * Create /dev/videoX node, comment for now until dummy /dev/videoX
@@ -795,27 +787,36 @@ static int32_t msm_sensor_driver_get_dt_data(struct msm_sensor_ctrl_t *s_ctrl)
 	}
 
 	/* Get mount angle */
-	if (0 > of_property_read_u32(of_node, "qcom,mount-angle",
-		&sensordata->sensor_info->sensor_mount_angle)) {
+
+	rc = of_property_read_u32(of_node, "qcom,mount-angle",
+		&sensordata->sensor_info->sensor_mount_angle);
+	CDBG("%s qcom,mount-angle %d, rc %d\n", __func__,
+		sensordata->sensor_info->sensor_mount_angle, rc);
+	if (rc < 0) {
 		/* Invalidate mount angle flag */
 		sensordata->sensor_info->is_mount_angle_valid = 0;
 		sensordata->sensor_info->sensor_mount_angle = 0;
+		rc = 0;
 	} else {
 		sensordata->sensor_info->is_mount_angle_valid = 1;
 	}
-	CDBG("%s qcom,mount-angle %d\n", __func__,
-		sensordata->sensor_info->sensor_mount_angle);
-	if (0 > of_property_read_u32(of_node, "qcom,sensor-position",
-		&sensordata->sensor_info->position)) {
-		CDBG("%s:%d Invalid sensor position\n", __func__, __LINE__);
+
+	rc = of_property_read_u32(of_node, "qcom,sensor-position",
+		&sensordata->sensor_info->position);
+	if (rc < 0) {
+		pr_err("%s:%d Invalid sensor position\n", __func__, __LINE__);
 		sensordata->sensor_info->position = INVALID_CAMERA_B;
 	}
-	if (0 > of_property_read_u32(of_node, "qcom,sensor-mode",
-		&sensordata->sensor_info->modes_supported)) {
-		CDBG("%s:%d Invalid sensor mode supported\n",
+
+	rc = of_property_read_u32(of_node, "qcom,sensor-mode",
+		&sensordata->sensor_info->modes_supported);
+	if (rc < 0) {
+		pr_err("%s:%d Invalid sensor mode supported\n",
 			__func__, __LINE__);
 		sensordata->sensor_info->modes_supported = CAMERA_MODE_INVALID;
+		rc = 0;
 	}
+
 	/* Get vdd-cx regulator */
 	/*Optional property, don't return error if absent */
 	of_property_read_string(of_node, "qcom,vdd-cx-name",

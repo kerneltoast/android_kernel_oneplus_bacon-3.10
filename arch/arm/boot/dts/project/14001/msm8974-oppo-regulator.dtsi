@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,8 +10,17 @@
  * GNU General Public License for more details.
  */
 
-#ifndef __MSM_ISP44_H__
-#define __MSM_ISP44_H__
+&pm8941_l3 {
+	regulator-min-microvolt = <1000000>;
+	qcom,init-voltage = <1000000>;
+};
 
-extern struct msm_vfe_hardware_info vfe44_hw_info;
-#endif /* __MSM_ISP44_H__ */
+&pm8941_l17 {
+	regulator-min-microvolt = <2700000>;
+	qcom,init-voltage = <2700000>;
+};
+
+&pm8941_l23 {
+	regulator-min-microvolt = <2800000>;
+	qcom,init-voltage = <2800000>;
+};
